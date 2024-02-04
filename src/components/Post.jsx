@@ -1,40 +1,75 @@
+import { format, formatDistance, formatDistanceToNow } from 'date-fns'
+import ptBr from 'date-fns/locale/pt-BR'
 import styles from "./Post.module.css"
 import { Comment } from "./Comment.jsx"
 import { Avatar } from "./Avatar.jsx"
+import { useState } from 'react'
 
-export function Post(){
+// conceito 'estado' para leitura de componentes = variáves que eu quero que o componente monitore
+export function Post({author, publishedAt, content}){
+   
+
+    const [comments, setComments] = useState([
+       'Post muito bacana hein'
+    ])
+    const [newCommentText, setNewCommentText] = useState('')
+
+    const publishedAtFormated = format(publishedAt,"d 'de' LLL 'às' HH:mm'h'", {
+        locale:ptBr,
+    }) 
+    const publishedDateRelativeToNow = formatDistanceToNow(publishedAt,{
+        locale:  ptBr,
+        addSuffix: true
+    })
+
+    //setComments: é usado para avisar alterações para o react
+    function handleCreateNewComment(){
+        event.preventDefault()
+
+        const newCommentText =  event.target.comment.value
+        setComments([...comments, newCommentText])
+        setNewCommentText('');
+
+        //event.target.comment.value = '';//pesquisar termo de programação imperativa aqui
+    }
+
+    function handleNewCommentChange(){
+        setNewCommentText(event.target.value)
+    }
+
+    function onDeleteComment(comment){
+        console.log(`Deletar comentário ${comment}`)
+    }
     return (
         <article className={styles.post}>
             <header>
                 <div className={styles.author}>
-                    <Avatar  src="https://avatars.githubusercontent.com/u/88410418?v=4"/>
+                    <Avatar  src={author.avatarUrl}/>
                     
                     <div className={styles.authorInfo}>
-                        <strong>Diego Alves</strong>
-                        <span>Web Developer</span>
+                        <strong>{author.nameUser}</strong>
+                        <span>{author.role}</span>
                     </div>
                 </div>
-                <time title="11 de maio às 08:13" dateTime="2022-05-11 08:13:30">Publicado a 1h</time>
+                <time title={publishedAtFormated} dateTime={publishedAt.toISOString()}>{publishedDateRelativeToNow}</time>
             </header>
 
             <div className={styles.content}>
-
-                <p>Fala galeraa 👋</p>
-
-                <p>Acabei de subir mais um projeto no meu portifa. É um projeto que fiz no NLW Return, evento da Rocketseat. O nome do projeto é DoctorCare 🚀</p>
-
-                <p><a href="">jane.design/doctorcare</a></p>
-
-                <p>
-                    <a href="">#novoprojeto</a> {''}
-                    <a>#nlw</a> {''}
-                    <a href="">#rocketseat</a>{''}
-                </p>
+                {content.map(line => {
+                  if(line.type == 'paragraph'){
+                    return <p key={line.content}>{line.content}</p>
+                  } else if (line.type == 'link'){
+                    return <p key={line.content}><a href="">{line.content}</a></p>
+                  }
+                })}
             </div>
 
-            <form className={styles.commentForm}>
+            <form onSubmit={handleCreateNewComment} className={styles.commentForm}>
                 <strong>Deixe seu comentário</strong>
-                <textarea placeholder="Deixe seu comentário"/>
+                <textarea name="comment" 
+                placeholder="Deixe seu comentário"
+                value={newCommentText}
+                onChange={handleNewCommentChange}/>
                 
                 <footer>
                     <button type="submit">Comentar</button>
@@ -43,9 +78,11 @@ export function Post(){
             </form>
 
             <div className={styles.commentList}>
-                <Comment/>
-                <Comment/>
-                <Comment/>
+            {comments.map(comment => {
+                return (<Comment key={comment} 
+                    content={comment} 
+                    onDeleteComment={onDeleteComment}/>)
+              })}
             </div>
 
 
@@ -53,3 +90,9 @@ export function Post(){
         
     )
 }
+/*new Intl.DateTimeFormat('pt-Br',{
+        day: '2-digit',
+        month: 'long',
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(publishedAt) obs: linhas substituida para uso da biblioteca propria para formatação de datetime*/
